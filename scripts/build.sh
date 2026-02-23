@@ -1,20 +1,16 @@
-#!/bin/bash -x
+#!/bin/bash
 source scripts/common.sh
 
-if [[ ${PIPELINE} ]]; then
-   #Capture docker exit status or fail with status 1 if build fails
-   docker build -t ${NAME}:${VERSION} . 2>&1 | tee ${BUILD_OUTPUT} && awk -F 'exit code: ' '/exit code/{print $2}' ${BUILD_OUTPUT} > ${BUILD_EXIT_FILE} || exit 1
-else
-   #Retain colour in docker build and capture exit status or fail with status 1 if build fails
-   unbuffer docker build -t ${NAME}:${VERSION} . 2>&1 | tee ${BUILD_OUTPUT} && awk -F 'exit code: ' '/exit code/{print $2}' ${BUILD_OUTPUT} > ${BUILD_EXIT_FILE} || exit 1
-fi
-
-echo -e ${COMMAND}
-echo exiting $(cat ${BUILD_EXIT_FILE})
+docker_build () {
+   pwd
+   cp /tmp/*.pem .
+   unbuffer ${BUILD_COMMAND}
+   echo -e ${RUN_COMMAND}
+   rm *.pem
+}
 
 
-
-
+local_build () {
 /bin/cat <<EOM > ${RUN_DIR}/${NAME}.service
 [Unit]
 Description=${DESCRIPTION}
@@ -25,8 +21,25 @@ Type=simple
 Restart=always
 RestartSec=1
 User=${USER}
-ExecStart=authbind $(which gunicorn) --certfile=/tmp/$DOMAIN.crt.pem --keyfile=/tmp/$DOMAIN.key.pem --bind 0.0.0.0:443 ${NAME}.app:app
+ExecStart=authbind $(which gunicorn) --certfile=/tmp/$DOMAIN.combined.pem --keyfile=/tmp/$DOMAIN.key.pem --bind 0.0.0.0:${PORT} ${NAME}.app:app
 [Install]
 WantedBy=multi-user.target
 EOM
-exit $(cat ${BUILD_EXIT_FILE})
+sudo cp ${RUN_DIR}/${NAME}.service /etc/systemd/system/
+sudo cat /etc/systemd/system/${NAME}.service 
+netstat -ntlp | awk /${PORT}/'{print $7}' | awk -F '/' '{print $1}' | sudo xargs kill 
+sudo systemctl daemon-reload
+sudo systemctl enable ${NAME}
+sudo systemctl stop ${NAME}
+sudo systemctl start ${NAME}
+for i in {1..30}; do 
+    CURL="curl https://${NAME}.${DOMAIN}:${PORT}"
+    echo ${CURL}
+    ${CURL} && break  
+    sleep ${i}
+    echo "Sleeping ${i}"
+done
+}
+
+
+docker_build && local_build

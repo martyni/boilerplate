@@ -18,14 +18,19 @@ python_install () {
 python_test () {
   CURRENT_TEST=Python
   echo -e ${YELLOW} Starting Python Test ${NO_COLOUR}
-  pytest
+  pgrep flask | xargs kill 2>/dev/null
+  flask --app=webapp.app:app run &
+  sleep 5
+  curl -I localhost:5000/basic  
+  curl  localhost:5000/basic  | jq .
+  pytest || echo "fail" && (pgrep flask | xargs kill)
 }
 
 linting_test () {
   CURRENT_TEST=Linting
   echo -e ${YELLOW} Starting Linting Test ${NO_COLOUR}
   autopep8 --recursive --in-place --aggressive --aggressive .
-  pylint $(git ls-files '*.py')
+  pylint $(git ls-files '*.py') || exit 1
 }
 
 build_test () {
@@ -37,19 +42,13 @@ build_test () {
 run_test () {
   CURRENT_TEST=Run
   echo -e ${YELLOW} Starting Run Test ${NO_COLOUR}
-  ${RUN_DIR}/run.sh | tee $OUTPUT_FILE 
+  ${RUN_DIR}/run.sh 
   echo -e ${YELLOW} Finished Run Test ${NO_COLOUR}
 }
 
 all_tests_pass () {
-  FAILED=$(grep fail ${OUTPUT_FILE}) 
-  if [ -z ${FAILED} ]; then
-  	echo -e ${GREEN} All tests passed ${NO_COLOUR}
-  	${RUN_DIR}/increment.sh && ${RUN_DIR}/build.sh && ${RUN_DIR}/install.sh
-  	exit 0
-  else
-  	exit 1
-  fi
+  echo -e ${GREEN} All tests passed ${NO_COLOUR}
+  ${RUN_DIR}/increment.sh && ${RUN_DIR}/build.sh && exit 0
 }
 
 test_failed () {

@@ -20,11 +20,12 @@ export FULL_NAME="${DOCKER_REPO}/$(cat ${RUN_DIR}/NAME)"
 export VERSION=$(cat ${RUN_DIR}/VERSION)
 export DESCRIPTION=$(cat ${RUN_DIR}/DESCRIPTION)
 export DOMAIN=$(cat ${RUN_DIR}/DOMAIN)
-export COMMAND="docker run ${DOCKER_FLAGS} ${NAME}:${VERSION}"
-export CONTAINER=$(docker run ${DOCKER_FLAGS} ${DOCKER_REPO}/${NAME}:${VERSION}|| (echo -e "fail to start container\n" >>${OUTPUT}))
+export BUILD_COMMAND="docker build  . -t ${DOCKER_REPO}/${NAME}:${VERSION}"
+export RUN_COMMAND="docker run ${DOCKER_FLAGS} ${DOCKER_REPO}/${NAME}:${VERSION}"
 export CURRENT_TEST=None
 export OUT=/tmp/output
 export OLD_VERSION=$(cat ${RUN_DIR}/VERSION)
 export INCREMENT=$(git rev-parse --abbrev-ref HEAD | awk -F "/" '{ print $1}')
 export SEMVER="/usr/bin/semver"
 export COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+export PORT=$(cat ${RUN_DIR}/PORT)
