@@ -5,8 +5,8 @@ import webapp
 from webapp.models import Basic, db
 
 conf_file = environ.get(
-    'WEBAPP_CONF') or f'{path.dirname(webapp.__file__)}/webconf.py'
-
+    'WEBAPP_CONF') or f'{path.dirname(webapp.__file__)}/config.py'
+print(conf_file)
 GOOD_DATA = {
     "mandatory": "<mandatory>",
     "optional": "<optional(optional)>",
@@ -18,6 +18,7 @@ def create_app(config_filename):
     new_app = Flask(__name__)
     new_app.config.from_pyfile(config_filename, silent=False)
     db.init_app(new_app)
+    print(new_app.config)
     with new_app.app_context():
         db.create_all()
 

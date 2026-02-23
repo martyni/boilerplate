@@ -24,7 +24,7 @@ python_test () {
   sleep 5
   curl -I localhost:5000/basic  
   curl  localhost:5000/basic  | jq .
-  export DB_NAME="sqlite:///${random_name}.db" pytest || echo "fail" && (pgrep flask | xargs kill)
+  pytest || echo "fail" && (pgrep flask | xargs kill)
 }
 
 linting_test () {
