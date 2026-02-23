@@ -18,7 +18,6 @@ python_install () {
 python_test () {
   CURRENT_TEST=Python
   echo -e ${YELLOW} Starting Python Test ${NO_COLOUR}
-  randome_name=$(tr -dc a-z < /dev/urandom | head -c "6")
   pgrep flask | xargs kill 2>/dev/null
   flask --app=webapp.app:app run &
   sleep 5

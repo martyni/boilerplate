@@ -75,4 +75,5 @@ def create_app(config_filename):
 app = create_app(conf_file)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
+    #app.run(debug=True) #For debugging local dev issues
